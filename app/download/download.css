@@ -1,0 +1,329 @@
+.site-page {
+  --site-max: 1180px;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.site-nav {
+  display: flex;
+  width: min(var(--site-max), calc(100% - 48px));
+  height: 84px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 auto;
+}
+
+.site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--ink);
+  font-family: Georgia, "Songti SC", serif;
+  font-size: 17px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.site-brand-mark {
+  position: relative;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 10px 10px 10px 3px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: Georgia, serif;
+  font-size: 23px;
+  font-style: italic;
+}
+
+.site-brand-mark::after {
+  position: absolute;
+  right: -7px;
+  bottom: -8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  content: "";
+}
+
+.site-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.site-nav-links a {
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.site-nav-links a:hover { color: var(--accent); }
+
+.site-theme-button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.site-hero {
+  display: grid;
+  width: min(var(--site-max), calc(100% - 48px));
+  min-height: 720px;
+  grid-template-columns: 0.83fr 1.35fr;
+  align-items: center;
+  gap: 60px;
+  margin: 0 auto;
+  padding: 60px 0 95px;
+}
+
+.site-kicker {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 22px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+}
+
+.site-kicker span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 5px var(--accent-soft);
+}
+
+.hero-copy h1 {
+  margin: 0;
+  font-family: Georgia, "Songti SC", "STSong", serif;
+  font-size: clamp(46px, 5.1vw, 72px);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 1.1;
+}
+
+.hero-copy h1 em {
+  color: var(--accent);
+  font-style: normal;
+}
+
+.hero-copy > p {
+  max-width: 500px;
+  margin: 25px 0 30px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 11px;
+}
+
+.download-primary,
+.download-secondary {
+  display: inline-flex;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 680;
+  text-decoration: none;
+}
+
+.download-primary {
+  gap: 9px;
+  padding: 0 21px;
+  border: 1px solid var(--accent-dark);
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 8px 22px rgba(190, 73, 40, 0.19);
+}
+
+.download-primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
+
+.download-secondary {
+  padding: 0 18px;
+  border: 1px solid var(--line-strong);
+  color: var(--muted);
+}
+
+.download-secondary:hover { background: var(--surface); color: var(--ink); }
+
+.hero-note {
+  margin-top: 17px;
+  color: var(--faint);
+  font-size: 9.5px;
+}
+
+.hero-note span { color: var(--green); }
+
+.product-window {
+  width: 790px;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 15px;
+  background: var(--surface);
+  box-shadow: 0 38px 90px rgba(49, 43, 35, 0.17), 0 3px 6px rgba(49, 43, 35, 0.06);
+  transform: perspective(1500px) rotateY(-4deg) rotateX(1deg);
+  transform-origin: left center;
+}
+
+.window-bar {
+  display: flex;
+  height: 39px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 13px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.window-dot { width: 8px; height: 8px; border-radius: 50%; background: #d8d1c7; }
+.window-dot:first-child { background: #df765e; }
+.window-dot:nth-child(2) { background: #e4b554; }
+.window-dot:nth-child(3) { background: #69ad78; }
+.window-bar small { margin: 0 auto; color: var(--faint); font-size: 8px; transform: translateX(-20px); }
+
+.window-body { display: grid; height: 465px; grid-template-columns: 155px 1fr; }
+.preview-sidebar { padding: 20px 12px; border-right: 1px solid var(--line); background: var(--sidebar); }
+.preview-logo { display: flex; align-items: center; gap: 7px; margin-bottom: 21px; font-family: Georgia, serif; font-size: 9px; }
+.preview-logo i { display: grid; width: 22px; height: 22px; place-items: center; border-radius: 6px 6px 6px 2px; background: var(--ink); color: var(--paper); font-size: 14px; }
+.preview-nav { display: grid; height: 30px; grid-template-columns: 16px 1fr auto; align-items: center; padding: 0 7px; border-radius: 6px; color: var(--muted); font-size: 7px; }
+.preview-nav.active { background: var(--surface); color: var(--ink); }
+.preview-nav small { color: var(--faint); font-size: 6px; }
+.preview-sidebar label { display: block; margin: 20px 7px 7px; color: var(--faint); font-size: 5px; font-weight: 800; letter-spacing: .15em; }
+.preview-nav i, .preview-cards small i { width: 5px; height: 5px; border-radius: 50%; }
+.orange { background: #ef8354; } .blue { background: #5b8def; } .purple { background: #8b6fd6; }
+.preview-main { padding: 18px 22px; background: var(--paper); }
+.preview-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
+.preview-top div { width: 205px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--faint); font-size: 7px; }
+.preview-top button { height: 29px; padding: 0 10px; border: 0; border-radius: 6px; background: var(--accent); color: white; font-size: 7px; }
+.preview-main h2 { margin: 0; font-family: Georgia, "Songti SC", serif; font-size: 20px; font-weight: 500; }
+.preview-sub { margin: 5px 0 22px; color: var(--muted); font-size: 7px; }
+.preview-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.preview-cards article { display: flex; min-width: 0; height: 198px; flex-direction: column; padding: 13px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.preview-cards small { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 6px; }
+.preview-cards h3 { margin: 18px 0 8px; overflow: hidden; font-family: Georgia, "Songti SC", serif; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.preview-cards p { display: -webkit-box; margin: 0; overflow: hidden; color: var(--muted); font-size: 6.5px; line-height: 1.8; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.preview-cards button { align-self: flex-end; margin-top: auto; padding: 6px 7px; border: 1px solid var(--line); border-radius: 5px; background: transparent; color: var(--muted); font-size: 6px; }
+
+.trust-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.trust-strip span { display: flex; height: 92px; align-items: center; justify-content: center; gap: 12px; border-right: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+.trust-strip span:last-child { border: 0; }
+.trust-strip i { color: var(--accent); font-family: Georgia, serif; font-size: 20px; font-style: normal; }
+
+.features-section,
+.download-section { width: min(var(--site-max), calc(100% - 48px)); margin: 0 auto; padding: 125px 0; }
+.section-heading { max-width: 620px; margin: 0 auto 55px; text-align: center; }
+.section-heading > span { color: var(--accent); font-size: 9px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+.section-heading h2 { margin: 13px 0 14px; font-family: Georgia, "Songti SC", serif; font-size: clamp(34px, 4vw, 48px); font-weight: 500; letter-spacing: -.045em; }
+.section-heading p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.8; }
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.feature-grid article { min-height: 230px; padding: 31px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.feature-grid b { color: var(--accent); font-family: Georgia, serif; font-size: 11px; }
+.feature-grid h3 { margin: 43px 0 12px; font-family: Georgia, "Songti SC", serif; font-size: 18px; font-weight: 600; }
+.feature-grid p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.8; }
+
+.download-section { border-top: 1px solid var(--line); }
+.platform-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 420px)); justify-content: center; gap: 16px; }
+.platform-grid article { position: relative; display: grid; grid-template-columns: 60px 1fr; gap: 18px; padding: 27px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface); }
+.platform-grid article.recommended { border-color: var(--accent); box-shadow: 0 10px 35px rgba(190, 73, 40, .09); }
+.platform-grid mark { position: absolute; top: -10px; right: 17px; padding: 4px 9px; border-radius: 99px; background: var(--accent); color: white; font-size: 7px; }
+.platform-icon { display: grid; width: 56px; height: 56px; place-items: center; border-radius: 12px; background: var(--paper); color: var(--ink); font-size: 25px; }
+.platform-grid h3 { margin: 5px 0 5px; font-family: Georgia, serif; font-size: 20px; }
+.platform-grid p { margin: 0; color: var(--muted); font-size: 9px; }
+.platform-grid a { grid-column: 1 / -1; display: flex; height: 40px; align-items: center; justify-content: space-between; padding: 0 13px; border-top: 1px solid var(--line); color: var(--ink); font-size: 10px; font-weight: 650; text-decoration: none; }
+.platform-grid a:hover { color: var(--accent); }
+.release-pending { margin: 18px 0 0; color: var(--faint); font-size: 9px; text-align: center; }
+
+.privacy-section { display: grid; grid-template-columns: 1.15fr .85fr; background: #24211d; color: #f4efe6; }
+.privacy-copy { padding: 100px max(48px, calc((100vw - var(--site-max)) / 2)); padding-right: 60px; }
+.privacy-copy > span { color: #ef8354; font-size: 8px; font-weight: 800; letter-spacing: .18em; }
+.privacy-copy h2 { margin: 16px 0 21px; font-family: Georgia, "Songti SC", serif; font-size: clamp(34px, 4vw, 52px); font-weight: 500; letter-spacing: -.045em; }
+.privacy-copy p { max-width: 540px; margin: 0; color: #aaa297; font-size: 12px; line-height: 1.9; }
+.privacy-copy ul { display: flex; gap: 22px; margin: 30px 0 0; padding: 0; list-style: none; color: #d6d0c7; font-size: 9px; }
+.privacy-copy li i { margin-right: 5px; color: #68b59e; font-style: normal; }
+.privacy-visual { position: relative; display: flex; min-height: 480px; align-items: center; justify-content: center; flex-direction: column; overflow: hidden; border-left: 1px solid #3a3631; }
+.privacy-visual::before, .privacy-visual::after { position: absolute; width: 380px; height: 380px; border: 1px solid #3e3933; border-radius: 50%; content: ""; }
+.privacy-visual::after { width: 250px; height: 250px; }
+.lock-ring { position: relative; z-index: 1; display: grid; width: 80px; height: 80px; place-items: center; border: 1px solid #4d463e; border-radius: 50%; background: #2c2823; color: #ef8354; }
+.lock-ring i { position: absolute; width: 16px; height: 12px; margin-top: 17px; border: 2px solid #ef8354; border-radius: 2px; }
+.lock-ring i::before { position: absolute; top: -12px; left: 2px; width: 8px; height: 10px; border: 2px solid #ef8354; border-bottom: 0; border-radius: 8px 8px 0 0; content: ""; }
+.lock-ring span { margin-top: 1px; font-size: 5px; }
+.privacy-visual strong { z-index: 1; margin-top: 22px; font-family: Georgia, serif; font-size: 25px; }
+.privacy-visual small { z-index: 1; margin-top: 5px; color: #80776d; font-size: 7px; letter-spacing: .2em; }
+
+.site-footer { display: flex; width: min(var(--site-max), calc(100% - 48px)); min-height: 125px; align-items: center; gap: 35px; margin: 0 auto; }
+.site-footer > p { color: var(--muted); font-size: 10px; }
+.site-footer > div { display: flex; align-items: center; gap: 22px; margin-left: auto; color: var(--faint); font-size: 9px; }
+.site-footer a { color: inherit; text-decoration: none; }
+
+:root[data-theme="dark"] .product-window { box-shadow: 0 38px 90px rgba(0, 0, 0, .35); }
+:root[data-theme="dark"] .site-brand-mark,
+:root[data-theme="dark"] .preview-logo i { background: #eee7db; color: #211f1c; }
+:root[data-theme="dark"] .privacy-section { background: #0f0e0d; }
+
+@media (max-width: 980px) {
+  .site-hero { grid-template-columns: 1fr; padding-top: 75px; }
+  .hero-copy { max-width: 700px; text-align: center; margin: 0 auto; }
+  .hero-copy > p { margin-right: auto; margin-left: auto; }
+  .hero-actions { justify-content: center; }
+  .product-window { justify-self: center; transform: none; }
+  .feature-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 760px) {
+  .site-nav { width: calc(100% - 32px); }
+  .site-nav-links { gap: 12px; }
+  .site-nav-links a { display: none; }
+  .site-hero, .features-section, .download-section, .site-footer { width: calc(100% - 32px); }
+  .site-hero { min-height: auto; gap: 45px; padding: 58px 0 70px; }
+  .hero-copy h1 { font-size: 43px; }
+  .product-window { width: 760px; transform: scale(.65); transform-origin: top center; margin-bottom: -155px; }
+  .trust-strip { grid-template-columns: repeat(2, 1fr); }
+  .trust-strip span { height: 72px; border-bottom: 1px solid var(--line); }
+  .feature-grid { grid-template-columns: 1fr; }
+  .feature-grid article { min-height: 190px; }
+  .platform-grid { grid-template-columns: 1fr; }
+  .privacy-section { grid-template-columns: 1fr; }
+  .privacy-copy { padding: 75px 24px; }
+  .privacy-copy ul { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .privacy-visual { min-height: 340px; border-top: 1px solid #3a3631; border-left: 0; }
+  .site-footer { align-items: flex-start; flex-direction: column; gap: 10px; padding: 35px 0; }
+  .site-footer > p { margin: 0; }
+  .site-footer > div { flex-wrap: wrap; margin: 10px 0 0; }
+}
+
+@media (max-width: 480px) {
+  .hero-copy h1 { font-size: 37px; }
+  .hero-copy > p { font-size: 12px; }
+  .hero-actions { flex-direction: column; }
+  .product-window { transform: scale(.48); margin-bottom: -240px; }
+  .features-section, .download-section { padding: 85px 0; }
+  .section-heading h2 { font-size: 34px; }
+}
