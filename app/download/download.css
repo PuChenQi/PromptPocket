@@ -259,6 +259,8 @@
 .platform-grid p { margin: 0; color: var(--muted); font-size: 9px; }
 .platform-grid a { grid-column: 1 / -1; display: flex; height: 40px; align-items: center; justify-content: space-between; padding: 0 13px; border-top: 1px solid var(--line); color: var(--ink); font-size: 10px; font-weight: 650; text-decoration: none; }
 .platform-grid a:hover { color: var(--accent); }
+.platform-actions { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.platform-actions a { grid-column: auto; border: 1px solid var(--line); border-radius: 8px; }
 .release-pending { margin: 18px 0 0; color: var(--faint); font-size: 9px; text-align: center; }
 
 .privacy-section { display: grid; grid-template-columns: 1.15fr .85fr; background: #24211d; color: #f4efe6; }

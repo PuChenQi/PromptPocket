@@ -7,6 +7,10 @@ type Theme = "light" | "dark";
 type Platform = "windows" | "mac" | "other";
 
 const REPOSITORY_URL = "https://github.com/PuChenQi/PromptPocket";
+const RELEASE_URL = `${REPOSITORY_URL}/releases/download/v1.0.0`;
+const WINDOWS_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_1.0.0_x64-setup.exe`;
+const MAC_ARM_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_1.0.0_aarch64.dmg`;
+const MAC_INTEL_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_1.0.0_x64.dmg`;
 
 export default function DownloadPage() {
   const [theme, setTheme] = useState<Theme>("light");
@@ -27,8 +31,6 @@ export default function DownloadPage() {
     document.documentElement.style.colorScheme = theme;
     window.localStorage.setItem("prompt-pocket-theme", theme);
   }, [theme]);
-
-  const releasesUrl = REPOSITORY_URL ? `${REPOSITORY_URL}/releases/latest` : "#download";
 
   return (
     <main className="site-page">
@@ -60,7 +62,7 @@ export default function DownloadPage() {
             不把内容上传到云端，让每一个好想法都安静地留在你的电脑里。
           </p>
           <div className="hero-actions">
-            <a className="download-primary" href={releasesUrl}>
+            <a className="download-primary" href={platform === "windows" ? WINDOWS_DOWNLOAD_URL : "#download"}>
               <span>{platform === "mac" ? "◆" : "▦"}</span>
               {platform === "mac" ? "下载 macOS 版" : platform === "windows" ? "下载 Windows 版" : "选择你的系统"}
             </a>
@@ -132,13 +134,16 @@ export default function DownloadPage() {
             {platform === "windows" && <mark>适合你的设备</mark>}
             <div className="platform-icon windows-icon">▦</div>
             <div><h3>Windows</h3><p>Windows 10 / 11 · 64 位</p></div>
-            <a href={releasesUrl}>下载 Windows 版 <span>→</span></a>
+            <a href={WINDOWS_DOWNLOAD_URL}>下载 Windows 版 <span>→</span></a>
           </article>
           <article className={platform === "mac" ? "recommended" : ""}>
             {platform === "mac" && <mark>适合你的设备</mark>}
             <div className="platform-icon mac-icon">◆</div>
             <div><h3>macOS</h3><p>Apple 芯片 / Intel 芯片</p></div>
-            <a href={releasesUrl}>下载 macOS 版 <span>→</span></a>
+            <div className="platform-actions">
+              <a href={MAC_ARM_DOWNLOAD_URL}>Apple 芯片 <span>→</span></a>
+              <a href={MAC_INTEL_DOWNLOAD_URL}>Intel 芯片 <span>→</span></a>
+            </div>
           </article>
         </div>
         {!REPOSITORY_URL && <p className="release-pending">安装包发布后，下载按钮会自动指向最新版。</p>}
