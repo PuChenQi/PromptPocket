@@ -41,3 +41,6 @@ next-env.d.ts
 /outputs/
 /work/
 /release/
+
+# Local Netlify folder
+.netlify

@@ -2,7 +2,7 @@
 
 PromptPocket 是一个本地优先的提示词分类管理工具。它支持 Windows 与 macOS，打开即可使用，不需要注册账号，也不会把提示词上传到云端。
 
-[下载官网](https://prompt-pocket.dawn-white-davinci.chatgpt.site/download) · [GitHub Releases](https://github.com/PuChenQi/PromptPocket/releases/latest)
+[下载官网](https://prompt-pocket.netlify.app/download) · [GitHub Releases](https://github.com/PuChenQi/PromptPocket/releases/latest)
 
 ## 功能
 
