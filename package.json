@@ -1,6 +1,6 @@
 {
   "name": "prompt-pocket",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "一个本地优先、支持分类与一键复制的提示词管理工具",
   "private": true,
   "engines": {

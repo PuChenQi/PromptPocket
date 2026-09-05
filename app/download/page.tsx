@@ -7,10 +7,10 @@ type Theme = "light" | "dark";
 type Platform = "windows" | "mac" | "other";
 
 const REPOSITORY_URL = "https://github.com/PuChenQi/PromptPocket";
-const RELEASE_URL = `${REPOSITORY_URL}/releases/download/v1.0.0`;
-const WINDOWS_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_1.0.0_x64-setup.exe`;
-const MAC_ARM_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_1.0.0_aarch64.dmg`;
-const MAC_INTEL_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_1.0.0_x64.dmg`;
+const RELEASE_URL = `${REPOSITORY_URL}/releases/download/v1.0.1`;
+const WINDOWS_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_1.0.1_x64-setup.exe`;
+const MAC_ARM_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_1.0.1_aarch64.dmg`;
+const MAC_INTEL_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_1.0.1_x64.dmg`;
 
 export default function DownloadPage() {
   const [theme, setTheme] = useState<Theme>("light");
