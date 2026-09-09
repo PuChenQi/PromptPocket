@@ -692,6 +692,80 @@ select:focus-visible {
   text-align: left;
 }
 
+.prompt-image-button,
+.prompt-image-loading {
+  position: relative;
+  width: 100%;
+  height: 142px;
+  margin-top: 13px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #efebe4;
+}
+
+.prompt-image-button {
+  display: block;
+  padding: 0;
+  cursor: zoom-in;
+}
+
+.prompt-image-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 220ms ease;
+}
+
+.prompt-image-button > span {
+  position: absolute;
+  right: 9px;
+  bottom: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: rgba(28, 25, 22, 0.72);
+  color: #fff;
+  font-size: 8.5px;
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.prompt-image-button:hover img {
+  transform: scale(1.025);
+}
+
+.prompt-image-button:hover > span,
+.prompt-image-button:focus-visible > span {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.prompt-image-loading {
+  display: grid;
+  place-items: center;
+  color: var(--faint);
+  font-size: 9.5px;
+}
+
+.prompt-image-loading::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 25%, rgba(255, 255, 255, 0.52) 50%, transparent 75%);
+  content: "";
+  transform: translateX(-100%);
+  animation: image-loading 1.4s ease-in-out infinite;
+}
+
+.prompt-card.has-image .card-body {
+  padding-top: 14px;
+}
+
+.prompt-card.has-image .card-body p {
+  min-height: 44px;
+  -webkit-line-clamp: 2;
+}
+
 .card-body h2 {
   margin: 0 0 11px;
   overflow: hidden;
@@ -995,6 +1069,88 @@ select:focus-visible {
   gap: 16px;
 }
 
+.image-field {
+  gap: 9px;
+}
+
+.image-picker {
+  display: flex;
+  min-height: 112px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 10px;
+  background: #faf8f3;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.image-picker:hover {
+  border-color: #c89a87;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.image-picker-icon {
+  color: var(--accent);
+  font-size: 23px;
+}
+
+.image-picker strong {
+  font-size: 11px;
+}
+
+.image-field .image-picker small {
+  position: static;
+  padding: 0;
+  background: transparent;
+  color: var(--faint);
+  font-size: 9px;
+}
+
+.image-editor-preview {
+  position: relative;
+  height: 190px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #efebe4;
+}
+
+.image-editor-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.image-editor-actions {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  gap: 7px;
+}
+
+.image-editor-actions .secondary-button,
+.image-remove-button {
+  height: 33px;
+  padding: 0 11px;
+  border-radius: 7px;
+  background: rgba(255, 254, 250, 0.92);
+  box-shadow: 0 3px 12px rgba(30, 27, 23, 0.12);
+  font-size: 9.5px;
+  backdrop-filter: blur(8px);
+}
+
+.image-remove-button {
+  border: 1px solid rgba(185, 75, 59, 0.24);
+  color: #a94738;
+  cursor: pointer;
+}
+
 .modal-footer {
   display: flex;
   align-items: center;
@@ -1088,6 +1244,80 @@ select:focus-visible {
   width: min(390px, 100%);
   padding: 30px;
   text-align: center;
+}
+
+.image-preview-layer {
+  padding: 28px;
+  background: rgba(18, 16, 14, 0.76);
+}
+
+.image-preview-modal {
+  display: flex;
+  width: min(1040px, 100%);
+  max-height: calc(100vh - 56px);
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 15px;
+  background: #1d1b18;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.45);
+  animation: modal-in 180ms ease both;
+}
+
+.image-preview-header {
+  display: flex;
+  min-height: 70px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 13px 17px 13px 21px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f5f0e8;
+}
+
+.image-preview-header > div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.image-preview-header span {
+  color: #aaa199;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.image-preview-header strong {
+  overflow: hidden;
+  font-family: Georgia, "Songti SC", serif;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.image-preview-header .close-button {
+  flex: 0 0 auto;
+  border-color: rgba(255, 255, 255, 0.13);
+  background: rgba(255, 255, 255, 0.07);
+  color: #eee8df;
+}
+
+.image-preview-canvas {
+  display: grid;
+  min-height: 240px;
+  flex: 1;
+  place-items: center;
+  overflow: auto;
+  padding: 18px;
+  background: #11100f;
+}
+
+.image-preview-canvas img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100vh - 164px);
+  object-fit: contain;
 }
 
 .confirm-icon {
@@ -1190,12 +1420,25 @@ select:focus-visible {
 :root[data-theme="dark"] .mobile-menu,
 :root[data-theme="dark"] .copy-button,
 :root[data-theme="dark"] .close-button,
+:root[data-theme="dark"] .image-picker,
+:root[data-theme="dark"] .image-editor-actions .secondary-button,
+:root[data-theme="dark"] .image-remove-button,
 :root[data-theme="dark"] .field input,
 :root[data-theme="dark"] .field textarea,
 :root[data-theme="dark"] .field select,
 :root[data-theme="dark"] .category-editor-row input,
 :root[data-theme="dark"] .category-add-row input {
   background: #25221e;
+}
+
+:root[data-theme="dark"] .prompt-image-button,
+:root[data-theme="dark"] .prompt-image-loading,
+:root[data-theme="dark"] .image-editor-preview {
+  background: #181715;
+}
+
+:root[data-theme="dark"] .image-picker:hover {
+  background: var(--accent-soft);
 }
 
 :root[data-theme="dark"] .secondary-button:hover,
@@ -1249,6 +1492,10 @@ select:focus-visible {
 
 @keyframes toast-in {
   from { opacity: 0; transform: translateY(8px); }
+}
+
+@keyframes image-loading {
+  to { transform: translateX(100%); }
 }
 
 @media (max-width: 1120px) {
@@ -1378,6 +1625,25 @@ select:focus-visible {
     width: 100%;
     max-height: 92vh;
     border-radius: 17px 17px 0 0;
+  }
+
+  .image-preview-layer {
+    align-items: center;
+    padding: 12px;
+  }
+
+  .image-preview-modal {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    border-radius: 13px;
+  }
+
+  .image-preview-canvas {
+    padding: 10px;
+  }
+
+  .image-preview-canvas img {
+    max-height: calc(100vh - 126px);
   }
 
   .modal-header,

@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import "./download.css";
 
 type Theme = "light" | "dark";
 type Platform = "windows" | "mac" | "other";
 
 const REPOSITORY_URL = "https://github.com/PuChenQi/PromptPocket";
-const RELEASE_URL = `${REPOSITORY_URL}/releases/download/v1.0.1`;
-const WINDOWS_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_1.0.1_x64-setup.exe`;
-const MAC_ARM_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_1.0.1_aarch64.dmg`;
-const MAC_INTEL_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_1.0.1_x64.dmg`;
+const VERSION = "1.1.0";
+const RELEASE_URL = `${REPOSITORY_URL}/releases/download/v${VERSION}`;
+const WINDOWS_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_${VERSION}_x64-setup.exe`;
+const MAC_ARM_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_${VERSION}_aarch64.dmg`;
+const MAC_INTEL_DOWNLOAD_URL = `${RELEASE_URL}/PromptPocket_${VERSION}_x64.dmg`;
 
 export default function DownloadPage() {
   const [theme, setTheme] = useState<Theme>("light");
@@ -19,11 +21,13 @@ export default function DownloadPage() {
   useEffect(() => {
     const saved = window.localStorage.getItem("prompt-pocket-theme");
     const preferred = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    setTheme(saved === "dark" || saved === "light" ? saved : preferred);
-
     const source = `${navigator.platform} ${navigator.userAgent}`.toLowerCase();
-    if (source.includes("win")) setPlatform("windows");
-    else if (source.includes("mac")) setPlatform("mac");
+    const detectedPlatform = source.includes("win") ? "windows" : source.includes("mac") ? "mac" : "other";
+    const timer = window.setTimeout(() => {
+      setTheme(saved === "dark" || saved === "light" ? saved : preferred);
+      setPlatform(detectedPlatform);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -58,7 +62,7 @@ export default function DownloadPage() {
           <div className="site-kicker"><span /> 本地优先的 AI 提示词库</div>
           <h1>你的好提示词，<br /><em>应该留在自己手里。</em></h1>
           <p>
-            分类整理、秒级搜索、一键复制。PromptPocket 不需要账号，
+            分类整理、效果图预览、秒级搜索、一键复制。PromptPocket 不需要账号，
             不把内容上传到云端，让每一个好想法都安静地留在你的电脑里。
           </p>
           <div className="hero-actions">
@@ -66,7 +70,7 @@ export default function DownloadPage() {
               <span>{platform === "mac" ? "◆" : "▦"}</span>
               {platform === "mac" ? "下载 macOS 版" : platform === "windows" ? "下载 Windows 版" : "选择你的系统"}
             </a>
-            <a className="download-secondary" href="/">在线体验</a>
+            <Link className="download-secondary" href="/">在线体验</Link>
           </div>
           <div className="hero-note"><span>✓</span> 免费使用　·　无需登录　·　支持明亮 / 暗夜模式</div>
         </div>
@@ -116,10 +120,10 @@ export default function DownloadPage() {
         <div className="feature-grid">
           <article><b>01</b><h3>分类井然有序</h3><p>按写作、开发、研究或任何自己的方式整理，分类名称随时可改。</p></article>
           <article><b>02</b><h3>一键立即复制</h3><p>无需点进详情，卡片上直接复制完整提示词，减少重复操作。</p></article>
-          <article><b>03</b><h3>搜索快得像记忆</h3><p>同时检索标题、正文和标签，提示词再多也能迅速找到。</p></article>
-          <article><b>04</b><h3>明暗都舒服</h3><p>明亮与暗夜模式一键切换，并自动记住你的显示偏好。</p></article>
-          <article><b>05</b><h3>备份握在手里</h3><p>随时导出标准 JSON 文件，也能在另一台电脑完整恢复。</p></article>
-          <article><b>06</b><h3>没有云端窥视</h3><p>不注册、不追踪、不上传，你的提示词只存在自己的设备中。</p></article>
+          <article><b>03</b><h3>效果一眼看懂</h3><p>为每条提示词添加本地图片，在卡片上预览结果，点击即可查看大图。</p></article>
+          <article><b>04</b><h3>搜索快得像记忆</h3><p>同时检索标题、正文和标签，提示词再多也能迅速找到。</p></article>
+          <article><b>05</b><h3>明暗都舒服</h3><p>明亮与暗夜模式一键切换，并自动记住你的显示偏好。</p></article>
+          <article><b>06</b><h3>数据握在手里</h3><p>文字和图片都留在设备中，并可通过 JSON 备份完整迁移。</p></article>
         </div>
       </section>
 
@@ -127,7 +131,7 @@ export default function DownloadPage() {
         <div className="section-heading">
           <span>下载桌面版</span>
           <h2>选择你的系统</h2>
-          <p>安装后即可离线使用。首个公开版本由 GitHub 自动构建并校验。</p>
+          <p>安装后即可离线使用。当前版本由 GitHub 自动构建并校验。</p>
         </div>
         <div className="platform-grid">
           <article className={platform === "windows" ? "recommended" : ""}>

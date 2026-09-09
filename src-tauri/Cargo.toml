@@ -1,6 +1,6 @@
 [package]
 name = "prompt-pocket"
-version = "1.0.1"
+version = "1.1.0"
 description = "Local-first prompt manager"
 authors = ["PromptPocket"]
 edition = "2021"

@@ -1,6 +1,14 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  blobToDataUrl,
+  dataUrlToBlob,
+  deleteLocalImage,
+  getLocalImage,
+  putLocalImage,
+} from "@/lib/local-images";
 
 type Category = {
   id: string;
@@ -15,8 +23,18 @@ type PromptItem = {
   categoryId: string;
   tags: string[];
   favorite: boolean;
+  image?: PromptImage;
   createdAt: number;
   updatedAt: number;
+};
+
+type PromptImage = {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  width: number;
+  height: number;
 };
 
 type PromptDraft = Omit<PromptItem, "id" | "createdAt" | "updatedAt" | "favorite"> & {
@@ -26,8 +44,25 @@ type PromptDraft = Omit<PromptItem, "id" | "createdAt" | "updatedAt" | "favorite
 
 type Theme = "light" | "dark";
 
+type EditorImageFile = {
+  blob: Blob;
+  previewUrl: string;
+};
+
+type BackupPayload = {
+  version: number;
+  exportedAt?: string;
+  categories?: Category[];
+  prompts?: PromptItem[];
+  images?: Record<string, string>;
+};
+
 const STORAGE_KEY = "prompt-pocket-data-v1";
 const PALETTE = ["#ef8354", "#5b8def", "#8b6fd6", "#2a9d8f", "#d4a72c", "#d75d8d"];
+const ACCEPTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const MAX_SOURCE_IMAGE_SIZE = 20 * 1024 * 1024;
+const MAX_STORED_IMAGE_SIZE = 10 * 1024 * 1024;
+const MAX_IMAGE_EDGE = 1600;
 
 const starterCategories: Category[] = [
   { id: "writing", name: "内容写作", color: "#ef8354" },
@@ -127,6 +162,60 @@ function icon(name: string) {
   return icons[name];
 }
 
+function loadBrowserImage(url: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("无法读取这张图片"));
+    image.src = url;
+  });
+}
+
+async function prepareLocalImage(file: File) {
+  if (!ACCEPTED_IMAGE_TYPES.has(file.type)) {
+    throw new Error("请选择 JPG、PNG、WebP 或 GIF 图片");
+  }
+  if (file.size > MAX_SOURCE_IMAGE_SIZE) {
+    throw new Error("图片不能超过 20 MB");
+  }
+
+  const sourceUrl = URL.createObjectURL(file);
+  try {
+    const image = await loadBrowserImage(sourceUrl);
+    const width = image.naturalWidth;
+    const height = image.naturalHeight;
+    if (!width || !height) throw new Error("无法读取这张图片");
+
+    if (file.type === "image/gif" || (Math.max(width, height) <= MAX_IMAGE_EDGE && file.size <= 3 * 1024 * 1024)) {
+      if (file.size > MAX_STORED_IMAGE_SIZE) throw new Error("处理后的图片不能超过 10 MB");
+      return { blob: file as Blob, width, height };
+    }
+
+    const scale = Math.min(1, MAX_IMAGE_EDGE / Math.max(width, height));
+    const outputWidth = Math.max(1, Math.round(width * scale));
+    const outputHeight = Math.max(1, Math.round(height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = outputWidth;
+    canvas.height = outputHeight;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("当前设备无法处理图片");
+    context.drawImage(image, 0, 0, outputWidth, outputHeight);
+
+    const outputType = file.type === "image/png" ? "image/png" : file.type === "image/webp" ? "image/webp" : "image/jpeg";
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (result) => result ? resolve(result) : reject(new Error("图片处理失败")),
+        outputType,
+        0.86,
+      );
+    });
+    if (blob.size > MAX_STORED_IMAGE_SIZE) throw new Error("处理后的图片不能超过 10 MB");
+    return { blob, width: outputWidth, height: outputHeight };
+  } finally {
+    URL.revokeObjectURL(sourceUrl);
+  }
+}
+
 export default function Home() {
   const [categories, setCategories] = useState<Category[]>(starterCategories);
   const [prompts, setPrompts] = useState<PromptItem[]>(starterPrompts);
@@ -140,27 +229,42 @@ export default function Home() {
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<PromptItem | null>(null);
+  const [imagePreviewTarget, setImagePreviewTarget] = useState<PromptItem | null>(null);
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+  const [editorImageFile, setEditorImageFile] = useState<EditorImageFile | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<Theme>("light");
   const fileInput = useRef<HTMLInputElement>(null);
+  const imageInput = useRef<HTMLInputElement>(null);
+  const imageUrlsRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
+    let restoredCategories: Category[] | undefined;
+    let restoredPrompts: PromptItem[] | undefined;
+    let restoredTheme: Theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    let readFailed = false;
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as { categories: Category[]; prompts: PromptItem[] };
         if (Array.isArray(parsed.categories) && Array.isArray(parsed.prompts)) {
-          setCategories(parsed.categories);
-          setPrompts(parsed.prompts);
+          restoredCategories = parsed.categories;
+          restoredPrompts = parsed.prompts;
         }
       }
       const savedTheme = window.localStorage.getItem("prompt-pocket-theme");
-      const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-      setTheme(savedTheme === "dark" || savedTheme === "light" ? savedTheme : preferredTheme);
+      if (savedTheme === "dark" || savedTheme === "light") restoredTheme = savedTheme;
     } catch {
-      setToast("本地数据读取失败，已载入示例内容");
+      readFailed = true;
     }
-    setHydrated(true);
+    const timer = window.setTimeout(() => {
+      if (restoredCategories) setCategories(restoredCategories);
+      if (restoredPrompts) setPrompts(restoredPrompts);
+      setTheme(restoredTheme);
+      if (readFailed) setToast("本地数据读取失败，已载入示例内容");
+      setHydrated(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -173,6 +277,65 @@ export default function Home() {
     if (!hydrated) return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ categories, prompts }));
   }, [categories, hydrated, prompts]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    let cancelled = false;
+    const wantedIds = new Set(prompts.flatMap((prompt) => prompt.image ? [prompt.image.id] : []));
+    const nextUrls = { ...imageUrlsRef.current };
+    let changed = false;
+
+    for (const [id, url] of Object.entries(nextUrls)) {
+      if (!wantedIds.has(id)) {
+        URL.revokeObjectURL(url);
+        delete nextUrls[id];
+        changed = true;
+      }
+    }
+    if (changed) {
+      imageUrlsRef.current = nextUrls;
+      setImageUrls(nextUrls);
+    }
+
+    const missingIds = [...wantedIds].filter((id) => !nextUrls[id]);
+    void Promise.all(
+      missingIds.map(async (id) => {
+        const blob = await getLocalImage(id);
+        return blob ? ([id, URL.createObjectURL(blob)] as const) : null;
+      }),
+    ).then((entries) => {
+      if (cancelled) {
+        entries.forEach((entry) => entry && URL.revokeObjectURL(entry[1]));
+        return;
+      }
+      const updatedUrls = { ...imageUrlsRef.current };
+      let hasNewUrl = false;
+      entries.forEach((entry) => {
+        if (!entry || updatedUrls[entry[0]]) return;
+        updatedUrls[entry[0]] = entry[1];
+        hasNewUrl = true;
+      });
+      if (hasNewUrl) {
+        imageUrlsRef.current = updatedUrls;
+        setImageUrls(updatedUrls);
+      }
+    }).catch(() => {
+      if (!cancelled) showToast("部分效果图片读取失败");
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, prompts]);
+
+  useEffect(() => () => {
+    Object.values(imageUrlsRef.current).forEach((url) => URL.revokeObjectURL(url));
+    imageUrlsRef.current = {};
+  }, []);
+
+  useEffect(() => () => {
+    if (editorImageFile) URL.revokeObjectURL(editorImageFile.previewUrl);
+  }, [editorImageFile]);
 
   useEffect(() => {
     if (!toast) return;
@@ -188,8 +351,10 @@ export default function Home() {
       }
       if (event.key === "Escape") {
         setEditor(null);
+        setEditorImageFile(null);
         setCategoryManagerOpen(false);
         setDeleteTarget(null);
+        setImagePreviewTarget(null);
       }
     }
     window.addEventListener("keydown", handleShortcut);
@@ -222,9 +387,17 @@ export default function Home() {
       : activeFilter === "favorites"
         ? "我的收藏"
         : categories.find((category) => category.id === activeFilter)?.name ?? "提示词";
+  const editorImagePreviewUrl = editorImageFile?.previewUrl ?? (editor?.image ? imageUrls[editor.image.id] : undefined);
 
   function showToast(message: string) {
     setToast(message);
+  }
+
+  function persistLibrary(nextCategories: Category[], nextPrompts: PromptItem[]) {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ categories: nextCategories, prompts: nextPrompts }),
+    );
   }
 
   function openCreate() {
@@ -232,6 +405,7 @@ export default function Home() {
       ? activeFilter
       : categories[0]?.id ?? "uncategorized";
     setEditor(blankDraft(categoryId));
+    setEditorImageFile(null);
     setTagText("");
   }
 
@@ -243,11 +417,48 @@ export default function Home() {
       categoryId: prompt.categoryId,
       tags: prompt.tags,
       favorite: prompt.favorite,
+      image: prompt.image,
     });
+    setEditorImageFile(null);
     setTagText(prompt.tags.join("，"));
   }
 
-  function savePrompt(event: FormEvent) {
+  function closeEditor() {
+    setEditor(null);
+    setEditorImageFile(null);
+  }
+
+  async function selectPromptImage(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !editor) return;
+
+    try {
+      const prepared = await prepareLocalImage(file);
+      const image: PromptImage = {
+        id: `image-${crypto.randomUUID()}`,
+        name: file.name.slice(0, 160),
+        type: prepared.blob.type || file.type,
+        size: prepared.blob.size,
+        width: prepared.width,
+        height: prepared.height,
+      };
+      setEditor((current) => current ? { ...current, image } : current);
+      setEditorImageFile({
+        blob: prepared.blob,
+        previewUrl: URL.createObjectURL(prepared.blob),
+      });
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "图片读取失败");
+    }
+  }
+
+  function removePromptImage() {
+    setEditor((current) => current ? { ...current, image: undefined } : current);
+    setEditorImageFile(null);
+  }
+
+  async function savePrompt(event: FormEvent) {
     event.preventDefault();
     if (!editor || !editor.title.trim() || !editor.content.trim()) return;
     const now = Date.now();
@@ -257,9 +468,19 @@ export default function Home() {
       .filter(Boolean)
       .slice(0, 8);
 
+    const previousPrompt = editor.id ? prompts.find((prompt) => prompt.id === editor.id) : undefined;
+    try {
+      if (editor.image && editorImageFile) {
+        await putLocalImage(editor.image.id, editorImageFile.blob);
+      }
+    } catch {
+      showToast("效果图片保存失败，请检查本机可用空间");
+      return;
+    }
+
+    let nextPrompts: PromptItem[];
     if (editor.id) {
-      setPrompts((current) =>
-        current.map((prompt) =>
+      nextPrompts = prompts.map((prompt) =>
           prompt.id === editor.id
             ? {
                 ...prompt,
@@ -267,14 +488,13 @@ export default function Home() {
                 content: editor.content.trim(),
                 categoryId: editor.categoryId,
                 tags: cleanTags,
+                image: editor.image,
                 updatedAt: now,
               }
             : prompt,
-        ),
       );
-      showToast("提示词已更新");
     } else {
-      setPrompts((current) => [
+      nextPrompts = [
         {
           id: crypto.randomUUID(),
           title: editor.title.trim(),
@@ -282,14 +502,27 @@ export default function Home() {
           categoryId: editor.categoryId,
           tags: cleanTags,
           favorite: false,
+          image: editor.image,
           createdAt: now,
           updatedAt: now,
         },
-        ...current,
-      ]);
-      showToast("提示词已保存到本地");
+        ...prompts,
+      ];
     }
-    setEditor(null);
+
+    try {
+      persistLibrary(categories, nextPrompts);
+    } catch {
+      if (editor.image && editorImageFile) void deleteLocalImage(editor.image.id).catch(() => undefined);
+      showToast("提示词保存失败，请检查本机可用空间");
+      return;
+    }
+    setPrompts(nextPrompts);
+    if (previousPrompt?.image && previousPrompt.image.id !== editor.image?.id) {
+      void deleteLocalImage(previousPrompt.image.id).catch(() => undefined);
+    }
+    showToast(editor.id ? "提示词已更新" : "提示词已保存到本地");
+    closeEditor();
   }
 
   async function copyPrompt(prompt: PromptItem) {
@@ -316,6 +549,24 @@ export default function Home() {
         prompt.id === id ? { ...prompt, favorite: !prompt.favorite, updatedAt: Date.now() } : prompt,
       ),
     );
+  }
+
+  async function confirmDeletePrompt() {
+    if (!deleteTarget) return;
+    const nextPrompts = prompts.filter((prompt) => prompt.id !== deleteTarget.id);
+    try {
+      persistLibrary(categories, nextPrompts);
+    } catch {
+      showToast("提示词删除失败，请稍后重试");
+      return;
+    }
+    setPrompts(nextPrompts);
+    if (deleteTarget.image) {
+      await deleteLocalImage(deleteTarget.image.id).catch(() => undefined);
+    }
+    setImagePreviewTarget((current) => current?.id === deleteTarget.id ? null : current);
+    setDeleteTarget(null);
+    showToast("提示词已删除");
   }
 
   function addCategory(event: FormEvent) {
@@ -353,36 +604,70 @@ export default function Home() {
     showToast("分类已删除，内容已移入其他分类");
   }
 
-  function exportData() {
-    const payload = JSON.stringify(
-      { version: 1, exportedAt: new Date().toISOString(), categories, prompts },
-      null,
-      2,
-    );
-    const blob = new Blob([payload], { type: "application/json" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `提示词备份-${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
-    URL.revokeObjectURL(link.href);
-    showToast("本地备份已导出");
+  async function exportData() {
+    try {
+      const imageEntries = await Promise.all(
+        prompts.flatMap((prompt) => prompt.image ? [prompt.image] : []).map(async (image) => {
+          const blob = await getLocalImage(image.id);
+          return blob ? ([image.id, await blobToDataUrl(blob)] as const) : null;
+        }),
+      );
+      const images = Object.fromEntries(imageEntries.filter((entry): entry is readonly [string, string] => Boolean(entry)));
+      const payload = JSON.stringify(
+        { version: 2, exportedAt: new Date().toISOString(), categories, prompts, images },
+        null,
+        2,
+      );
+      const blob = new Blob([payload], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `提示词备份-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      showToast("提示词与效果图片已备份");
+    } catch {
+      showToast("备份导出失败，请稍后重试");
+    }
   }
 
   function importData(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
-        const parsed = JSON.parse(String(reader.result)) as {
-          categories?: Category[];
-          prompts?: PromptItem[];
-        };
+        const parsed = JSON.parse(String(reader.result)) as BackupPayload;
         if (!Array.isArray(parsed.categories) || !Array.isArray(parsed.prompts)) throw new Error();
+        const backupImages = parsed.images ?? {};
+        const imageRecords = await Promise.all(
+          parsed.prompts.flatMap((prompt) => {
+            const imageId = prompt.image?.id;
+            const dataUrl = imageId ? backupImages[imageId] : undefined;
+            return imageId && typeof dataUrl === "string"
+              ? [dataUrlToBlob(dataUrl).then((blob) => ({ id: imageId, blob }))]
+              : [];
+          }),
+        );
+        await Promise.all(imageRecords.map((image) => putLocalImage(image.id, image.blob)));
+
+        const restoredImageIds = new Set(imageRecords.map((image) => image.id));
+        const restoredPrompts = parsed.prompts.map((prompt) =>
+          prompt.image && !restoredImageIds.has(prompt.image.id)
+            ? { ...prompt, image: undefined }
+            : prompt,
+        );
+        persistLibrary(parsed.categories, restoredPrompts);
+        const replacedImageIds = prompts.flatMap((prompt) => prompt.image ? [prompt.image.id] : []);
+        await Promise.all(
+          replacedImageIds
+            .filter((id) => !restoredImageIds.has(id))
+            .map((id) => deleteLocalImage(id)),
+        );
         setCategories(parsed.categories);
-        setPrompts(parsed.prompts);
+        setPrompts(restoredPrompts);
         setActiveFilter("all");
-        showToast(`已恢复 ${parsed.prompts.length} 条提示词`);
+        setImagePreviewTarget(null);
+        showToast(`已恢复 ${restoredPrompts.length} 条提示词与 ${imageRecords.length} 张图片`);
       } catch {
         showToast("无法读取这个备份文件");
       }
@@ -518,7 +803,7 @@ export default function Home() {
               {filteredPrompts.map((prompt) => {
                 const category = categories.find((item) => item.id === prompt.categoryId);
                 return (
-                  <article className="prompt-card" key={prompt.id}>
+                  <article className={prompt.image ? "prompt-card has-image" : "prompt-card"} key={prompt.id}>
                     <div className="card-topline">
                       <span className="category-badge" style={{ "--badge-color": category?.color ?? "#777" } as React.CSSProperties}>
                         <i /> {category?.name ?? "未分类"}
@@ -540,6 +825,22 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
+                    {prompt.image && (
+                      imageUrls[prompt.image.id] ? (
+                        <button
+                          className="prompt-image-button"
+                          onClick={() => setImagePreviewTarget(prompt)}
+                          aria-label={`查看 ${prompt.title} 的效果图片`}
+                        >
+                          <img src={imageUrls[prompt.image.id]} alt={`${prompt.title} 的效果图`} />
+                          <span>查看大图</span>
+                        </button>
+                      ) : (
+                        <div className="prompt-image-loading" aria-label="效果图片加载中">
+                          <span>效果图片加载中…</span>
+                        </div>
+                      )
+                    )}
                     <button className="card-body" onClick={() => openEdit(prompt)} aria-label={`编辑 ${prompt.title}`}>
                       <h2>{prompt.title}</h2>
                       <p>{prompt.content}</p>
@@ -577,14 +878,14 @@ export default function Home() {
       </section>
 
       {editor && (
-        <div className="modal-layer" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setEditor(null)}>
+        <div className="modal-layer" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && closeEditor()}>
           <form className="editor-modal" onSubmit={savePrompt}>
             <div className="modal-header">
               <div>
                 <span className="eyebrow">{editor.id ? "编辑内容" : "收进口袋"}</span>
                 <h2>{editor.id ? "编辑提示词" : "新建提示词"}</h2>
               </div>
-              <button type="button" className="close-button" onClick={() => setEditor(null)} aria-label="关闭">{icon("close")}</button>
+              <button type="button" className="close-button" onClick={closeEditor} aria-label="关闭">{icon("close")}</button>
             </div>
             <div className="modal-content">
               <label className="field">
@@ -608,6 +909,35 @@ export default function Home() {
                 />
                 <small>{editor.content.length} 个字符</small>
               </label>
+              <div className="field image-field">
+                <span>效果图片 <em>选填，仅保存在本机</em></span>
+                {editorImagePreviewUrl ? (
+                  <div className="image-editor-preview">
+                    <img src={editorImagePreviewUrl} alt="提示词效果预览" />
+                    <div className="image-editor-actions">
+                      <button type="button" className="secondary-button" onClick={() => imageInput.current?.click()}>
+                        更换图片
+                      </button>
+                      <button type="button" className="image-remove-button" onClick={removePromptImage}>
+                        移除
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" className="image-picker" onClick={() => imageInput.current?.click()}>
+                    <span className="image-picker-icon">▧</span>
+                    <strong>选择本地图片</strong>
+                    <small>支持 JPG、PNG、WebP、GIF，最大 20 MB</small>
+                  </button>
+                )}
+                <input
+                  ref={imageInput}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  hidden
+                  onChange={selectPromptImage}
+                />
+              </div>
               <div className="field-row">
                 <label className="field">
                   <span>分类</span>
@@ -622,13 +952,36 @@ export default function Home() {
               </div>
             </div>
             <div className="modal-footer">
-              <span>保存后仅写入此浏览器</span>
+              <span>文字与图片仅写入本机</span>
               <div>
-                <button type="button" className="secondary-button" onClick={() => setEditor(null)}>取消</button>
+                <button type="button" className="secondary-button" onClick={closeEditor}>取消</button>
                 <button type="submit" className="primary-button">{editor.id ? "保存修改" : "保存提示词"}</button>
               </div>
             </div>
           </form>
+        </div>
+      )}
+
+      {imagePreviewTarget?.image && imageUrls[imagePreviewTarget.image.id] && (
+        <div
+          className="modal-layer image-preview-layer"
+          role="presentation"
+          onMouseDown={(event) => event.target === event.currentTarget && setImagePreviewTarget(null)}
+        >
+          <div className="image-preview-modal" role="dialog" aria-modal="true" aria-label={`${imagePreviewTarget.title} 的效果图片`}>
+            <div className="image-preview-header">
+              <div>
+                <span>效果图片</span>
+                <strong>{imagePreviewTarget.title}</strong>
+              </div>
+              <button className="close-button" onClick={() => setImagePreviewTarget(null)} aria-label="关闭大图">
+                {icon("close")}
+              </button>
+            </div>
+            <div className="image-preview-canvas">
+              <img src={imageUrls[imagePreviewTarget.image.id]} alt={`${imagePreviewTarget.title} 的效果图`} />
+            </div>
+          </div>
         </div>
       )}
 
@@ -669,11 +1022,7 @@ export default function Home() {
             <p>“{deleteTarget.title}” 将从本地永久删除，此操作无法撤销。</p>
             <div>
               <button className="secondary-button" onClick={() => setDeleteTarget(null)}>取消</button>
-              <button className="danger-button" onClick={() => {
-                setPrompts((current) => current.filter((prompt) => prompt.id !== deleteTarget.id));
-                setDeleteTarget(null);
-                showToast("提示词已删除");
-              }}>确认删除</button>
+              <button className="danger-button" onClick={confirmDeletePrompt}>确认删除</button>
             </div>
           </div>
         </div>
